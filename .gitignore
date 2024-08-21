@@ -1,0 +1,48 @@
+# Pliki i katalogi generowane przez kompilator
+*.o
+*.obj
+*.exe
+*.out
+*.a
+*.lib
+*.dll
+*.so
+*.dylib
+
+# Katalogi generowane przez kompilator
+build/
+bin/
+lib/
+obj/
+
+# Pliki tymczasowe edytora
+*.swp
+*.swo
+*.swn
+*.tmp
+
+# Pliki i katalogi tworzone przez Visual Studio Code
+.vscode/
+.settings/
+
+# Pliki systemowe
+.DS_Store
+Thumbs.db
+
+# Pliki konfiguracji systemów budowania
+CMakeFiles/
+CMakeCache.txt
+Makefile
+cmake_install.cmake
+
+# Pliki logów
+*.log
+
+# Pliki zależności i zarządzania pakietami
+*.d
+*.dep
+
+# Inne
+*.local
+*.history
+*.orig
