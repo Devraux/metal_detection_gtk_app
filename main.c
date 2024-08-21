@@ -11,7 +11,7 @@ static void activate(GtkApplication *app, gpointer user_data) {
     GtkWidget *button;
     GtkWidget *label;
 
-    // Tworzenie nowego okna
+    // Tworzenie nowego okna //
     window = gtk_application_window_new(app);
     gtk_window_set_title(GTK_WINDOW(window), "GTK Hello1 World");
 
