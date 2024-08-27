@@ -3,6 +3,6 @@
 
 #include <gtk/gtk.h>
 
-void gtk_window(GtkApplication* app, gpointer user_data);
+void gtk_Activate(GtkApplication* app, gpointer user_data);
 
 #endif
