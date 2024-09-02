@@ -3,7 +3,9 @@
 
 #include <gtk/gtk.h>
 #include <cairo.h>
-#include <glib.h> 
+#include <stdint.h>
+#include <math.h>
+#include <stdint.h>
 
 #define max_Metal_Detection_Points 300 
 
