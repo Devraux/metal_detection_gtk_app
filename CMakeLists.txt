@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.27.4)
 project(metal_detection_app C)
 
-set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD 17)
 
 #PKG configuration
 find_package(PkgConfig REQUIRED)
@@ -13,7 +13,7 @@ link_directories(${GTK_LIBRARY_DIRS})
 add_executable(${PROJECT_NAME}
 
     GUI/gui.c
+    wifi/wifi.c
     main.c)
 
-
-target_link_libraries(${PROJECT_NAME} ${GTK_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${GTK_LIBRARIES} ws2_32)

@@ -1,5 +1,6 @@
 #include <gtk/gtk.h>
 #include "GUI/gui.h"
+#include "wifi/wifi.h"
 
 int main (int argc, char **argv)
 {
