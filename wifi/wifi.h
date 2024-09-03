@@ -7,11 +7,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <winsock2.h>
+#include <windows.h>
+#include <pthread.h>
+
 
 #define buffer_Size 4096
+#define queue_Size 25
 
-
-typedef struct __attribute__((packed)){
+typedef struct pico_To_Server_Frame_t{
     bool status;                       //Pi pico status -> 0-Active, 1-inactive
     
     float MPU_X;                       //MPU gyroscope calculated X current coordinate
@@ -28,16 +31,35 @@ typedef struct __attribute__((packed)){
     //uint32_t metal_Detection_Counter;  //metal Detection Counter 
 }pico_To_Server_Frame_t; 
 
-typedef struct __attribute__((packed)){
+typedef struct server_To_Pico_Frame_t{
     bool status;                       //Server status -> 0-Active, 1-inactive
     uint8_t direction;                 //Vehicle direction command
     int16_t velocity;                  //Vehicle velocity command
 }server_To_Pico_Frame_t;
 
+typedef struct pico_To_Server_Queue{
+    pico_To_Server_Frame_t *pico_To_Server_Data;
+    pthread_mutex_t mutex;
+    pthread_cond_t not_empty;
+    pthread_cond_t not_full;
+    uint32_t head, tail;
+    uint32_t size;
+}pico_To_Server_Queue;
 
-void wifi_Init(void);
+/// @brief Pico to server transmission initialization
+/// @param --
+void wifi_Receive_Init(void);
 
-void wifi_Deinit(void);
+/// @brief server to Pico transmission initialization
+/// @param --
+void wifi_Send_Init(void);
 
+/// @brief Integer type to ASCII conversion
+/// @param data int input data
+/// @return converted data(ASCII)
+uint32_t INT_To_ASCII(uint32_t data);
 
+/// @brief queue initialization
+/// @param queue queue data pointer
+void Queue_init(pico_To_Server_Queue *queue);
 #endif
