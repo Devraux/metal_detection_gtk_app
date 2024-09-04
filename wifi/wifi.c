@@ -146,20 +146,20 @@ void* wifi_Send_Thread(void* arg)
     {
         if (pico_IP_Detected)
         {   
-            if (GetAsyncKeyState('w') & 0x8000)
+            if (GetAsyncKeyState('W') & 0x8000)
                 server_To_Pico_Data.direction = 1;      // Drive forward
-            else if (GetAsyncKeyState('a') & 0x8000)
+            else if (GetAsyncKeyState('A') & 0x8000)
                 server_To_Pico_Data.direction = 3;      // Turn left
-            else if (GetAsyncKeyState('s') & 0x8000)
+            else if (GetAsyncKeyState('S') & 0x8000)
                 server_To_Pico_Data.direction = 2;      // Drive backward
-            else if (GetAsyncKeyState('d') & 0x8000)
+            else if (GetAsyncKeyState('D') & 0x8000)
                 server_To_Pico_Data.direction = 4;      // Turn right
             else
                 server_To_Pico_Data.direction = 5;      // STOP
 
             server_To_Pico_Data.velocity = 250;         // 250 is strongly recommended velocity
             server_To_Pico_Data.status = 0;             // 0-> Server and transmission is OK, 1 otherwise 
-
+            printf("direction: %d\n", server_To_Pico_Data.direction);
             memcpy(buffer, &server_To_Pico_Data, sizeof(server_To_Pico_Frame_t));
 
             int send_result = sendto(send_Socket, buffer, sizeof(server_To_Pico_Frame_t), 0, (struct sockaddr*)&pico_addr, sizeof(pico_addr));
@@ -170,7 +170,7 @@ void* wifi_Send_Thread(void* arg)
                 break;
             }
 
-            printf("Data sent to %s:%d\n", Pico_Ip_Address, Pico_Port);
+            printf("Data sent to %s, Port: %d\n", Pico_Ip_Address, Pico_Port);
             Sleep(175);
         }
     }
