@@ -7,6 +7,10 @@
 #include <math.h>
 #include <stdint.h>
 
+#include "../wifi/wifi.h"
+
+
+
 #define max_Metal_Detection_Points 300 
 
 typedef struct point_t{

@@ -93,6 +93,8 @@ void* wifi_Receive_Thread(void* arg)
                 printf("Client detected with IP: %s and port: %d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
             }
 
+            memcpy(&pico_To_Server_Data, buffer, sizeof(pico_To_Server_Frame_t));   // Copy received data from wifi buffer to structure
+            queue_Add_Blocking(&pico_To_Server_Queue, &pico_To_Server_Data);
             //WIFI TRANSMISSION CHECK
             //printf("Received data from Pico:\n");
             //printf("Status: %d\n", pico_To_Server_Data.status);
@@ -104,9 +106,9 @@ void* wifi_Receive_Thread(void* arg)
             //printf("GPS_Longitude_Direction: %c\n", INT_To_ASCII(pico_To_Server_Data.GPS_Longitude_Direction));
             //printf("Metal Detection: %d\n", pico_To_Server_Data.metal_Detection);
 
-            memcpy(&pico_To_Server_Data, buffer, sizeof(pico_To_Server_Frame_t));   // Copy received data from wifi buffer to structure
             memset(&pico_To_Server_Data, 0, sizeof(pico_To_Server_Frame_t));        // Clear buffer
         }
+        Sleep(215);
     }
 }
 
@@ -159,7 +161,7 @@ void* wifi_Send_Thread(void* arg)
 
             server_To_Pico_Data.velocity = 250;         // 250 is strongly recommended velocity
             server_To_Pico_Data.status = 0;             // 0-> Server and transmission is OK, 1 otherwise 
-            printf("direction: %d\n", server_To_Pico_Data.direction);
+            
             memcpy(buffer, &server_To_Pico_Data, sizeof(server_To_Pico_Frame_t));
 
             int send_result = sendto(send_Socket, buffer, sizeof(server_To_Pico_Frame_t), 0, (struct sockaddr*)&pico_addr, sizeof(pico_addr));
@@ -170,7 +172,7 @@ void* wifi_Send_Thread(void* arg)
                 break;
             }
 
-            printf("Data sent to %s, Port: %d\n", Pico_Ip_Address, Pico_Port);
+            //printf("Data sent to %s, Port: %d\n", Pico_Ip_Address, Pico_Port);
             Sleep(175);
         }
     }

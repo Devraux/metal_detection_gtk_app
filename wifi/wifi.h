@@ -9,11 +9,11 @@
 #include <winsock2.h>
 #include <windows.h>
 #include <pthread.h>
-
+//#include <unistd.h>
 
 #define buffer_Size 4096
 #define queue_Size 25
-#define Pico_Ip_Address "192.168.137.144" 
+#define Pico_Ip_Address "192.168.137.194" 
 #define Pico_Port 4444
 
 typedef struct pico_To_Server_Frame_t{
@@ -48,6 +48,9 @@ typedef struct pico_To_Server_Queue_t{
     uint32_t size;
 }pico_To_Server_Queue_t;
 
+extern pico_To_Server_Queue_t pico_To_Server_Queue;
+
+
 /// @brief wifi transmission initialization
 /// @param --
 void wifi_Transmission_Init(void);
@@ -71,13 +74,20 @@ uint32_t INT_To_ASCII(uint32_t data);
 /// @param queue queue data pointer
 void Queue_init(pico_To_Server_Queue_t *queue);
 
+/// @brief queue init
+/// @param queue pointer to queue data structure
 void queue_Init(pico_To_Server_Queue_t *queue);
 
+/// @brief queue add data to queue buffer and wait until data will be added 
+/// @param queue pointer to queue data structure 
+/// @param data data to add 
 void queue_Add_Blocking(pico_To_Server_Queue_t *queue, pico_To_Server_Frame_t *data);
 
+/// @brief queue remove data from queue buffer and wait until data will be removed
+/// @param queue pointer to queue data structure
+/// @param data data place where data will be saved
 void queue_Remove_Blocking(pico_To_Server_Queue_t *queue, pico_To_Server_Frame_t *data);
 
 void* wifi_Receive_Thread(void* arg);
 void* wifi_Send_Thread(void* arg);
-
 #endif
