@@ -1,44 +1,80 @@
 #include "wifi.h"
 
-WSADATA wsa_Receive, wsa_Send;
-SOCKET receive_Socket, send_Socket;
-struct sockaddr_in server_addr, client_addr;
-int client_addr_len = sizeof(client_addr);
-char buffer[buffer_Size];
-pico_To_Server_Frame_t pico_To_Server_Data = {0};
-server_To_Pico_Frame_t server_To_Pico_Data = {0};
+//Pico IP detection check 
 bool pico_IP_Detected = false;
 
+//Receive and send buffer data
+pico_To_Server_Frame_t pico_To_Server_Data = {0};
+server_To_Pico_Frame_t server_To_Pico_Data = {0};
 
-void wifi_Receive_Init(void)
+//Thread and Queue data
+pthread_t receive_thread, send_thread;
+pico_To_Server_Queue_t pico_To_Server_Queue;
+
+void wifi_Transmission_Init(void)
 {
-    if (WSAStartup(MAKEWORD(2, 2), &wsa_Receive) != 0)
-    {
-        printf("Failed. Error Code : %d\n", WSAGetLastError());
+    //Queue Initialization
+    queue_Init(&pico_To_Server_Queue);
+
+    int result;
+
+    //Receiving Thread
+    result = pthread_create(&receive_thread, NULL, wifi_Receive_Thread, NULL);
+    if (result != 0) {
+        printf("receive task Error <-> Error code: %d\n", result);
         return;
     }
+
+    //Sending Thread
+    result = pthread_create(&send_thread, NULL, wifi_Send_Thread, NULL);
+    if (result != 0) {
+        printf("send task Error <-> Error code: %d\n", result);
+        return;
+    }
+
+    //Thread Joining
+    pthread_join(receive_thread, NULL);
+    pthread_join(send_thread, NULL);
+}
+
+void* wifi_Receive_Thread(void* arg)
+{
+    WSADATA wsa_Receive;
+    SOCKET receive_Socket;
+    struct sockaddr_in server_addr, client_addr;
+    int client_addr_len = sizeof(client_addr);
+    char buffer[buffer_Size];
+    pico_To_Server_Frame_t pico_To_Server_Data = {0};
+
+    if(WSAStartup(MAKEWORD(2, 2), &wsa_Receive) != 0)
+    {
+        printf("Failed. Error Code : %d\n", WSAGetLastError());
+        return NULL;
+    }
+
     else
         printf("Winsock initialized.\n");
 
-    if ((receive_Socket = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET)
+    if((receive_Socket = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET)
     {
         printf("Could not create socket : %d\n", WSAGetLastError());
-        return;
+        return NULL;
     }
     else
         printf("Socket created.\n");
 
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = INADDR_ANY;
-    server_addr.sin_port = htons(4444);
+    server_addr.sin_port = htons(Pico_Port);
 
-    if (bind(receive_Socket, (struct sockaddr*)&server_addr, sizeof(server_addr)) == SOCKET_ERROR)
+    if(bind(receive_Socket, (struct sockaddr*)&server_addr, sizeof(server_addr)) == SOCKET_ERROR)
     {
         printf("Bind failed with error code : %d\n", WSAGetLastError());
         closesocket(receive_Socket);
         WSACleanup();
-        return;
+        return NULL;
     }
+
     else
         printf("Bind done. Server is listening on port 4444...\n");
 
@@ -47,86 +83,94 @@ void wifi_Receive_Init(void)
         int bytes_received = recvfrom(receive_Socket, buffer, buffer_Size, 0, (struct sockaddr*)&client_addr, &client_addr_len);
 
         if(bytes_received == SOCKET_ERROR)
-        {
             printf("recvfrom failed with error code : %d\n", WSAGetLastError());
-        }
+        
         else
-        {
-            memcpy(&pico_To_Server_Data, buffer, sizeof(pico_To_Server_Frame_t));
-
+        {   
             if (!pico_IP_Detected)
             {
-                pico_IP_Detected = true;
+                pico_IP_Detected = true; // Pi Pico IP detected
                 printf("Client detected with IP: %s and port: %d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
             }
 
-            /* WIFI TRANSMISSION CHECK
-            printf("Received data from Pico:\n");
-            printf("Status: %d\n", pico_To_Server_Data.status);
-            printf("MPU_X: %.2f\n", pico_To_Server_Data.MPU_X);
-            printf("MPU_Y: %.2f\n", pico_To_Server_Data.MPU_Y);
-            printf("GPS_Latitude: %u.%u\n", pico_To_Server_Data.GPS_Latitude, pico_To_Server_Data.GPS_Latitude_dec);
-            printf("GPS_Latitude_Direction: %c\n", int_To_ASCII(pico_To_Server_Data.GPS_Latitude_Direction));
-            printf("GPS_Longitude: %u.%u\n", pico_To_Server_Data.GPS_Longitude, pico_To_Server_Data.GPS_Longitude_dec);
-            printf("GPS_Longitude_Direction: %c\n", pico_To_Server_Data.GPS_Longitude_Direction);
-            printf("Metal Detection: %d\n", int_To_ASCII(pico_To_Server_Data.metal_Detection));
-            */
+            //WIFI TRANSMISSION CHECK
+            //printf("Received data from Pico:\n");
+            //printf("Status: %d\n", pico_To_Server_Data.status);
+            //printf("MPU_X: %.2f\n", pico_To_Server_Data.MPU_X);
+            //printf("MPU_Y: %.2f\n", pico_To_Server_Data.MPU_Y);
+            //printf("GPS_Latitude: %u.%u\n", pico_To_Server_Data.GPS_Latitude, pico_To_Server_Data.GPS_Latitude_dec);
+            //printf("GPS_Latitude_Direction: %c\n", INT_To_ASCII(pico_To_Server_Data.GPS_Latitude_Direction));
+            //printf("GPS_Longitude: %u.%u\n", pico_To_Server_Data.GPS_Longitude, pico_To_Server_Data.GPS_Longitude_dec);
+            //printf("GPS_Longitude_Direction: %c\n", INT_To_ASCII(pico_To_Server_Data.GPS_Longitude_Direction));
+            //printf("Metal Detection: %d\n", pico_To_Server_Data.metal_Detection);
+
+            memcpy(&pico_To_Server_Data, buffer, sizeof(pico_To_Server_Frame_t));   // Copy received data from wifi buffer to structure
+            memset(&pico_To_Server_Data, 0, sizeof(pico_To_Server_Frame_t));        // Clear buffer
         }
     }
 }
 
-void wifi_Send_Init(void)
+void* wifi_Send_Thread(void* arg)
 {
-    if (WSAStartup(MAKEWORD(2, 2), &wsa_Send) != 0)
+    WSADATA wsa_Send;
+    SOCKET send_Socket;
+    struct sockaddr_in pico_addr;
+    char buffer[buffer_Size];
+    server_To_Pico_Frame_t server_To_Pico_Data = {0};
+
+    if(WSAStartup(MAKEWORD(2, 2), &wsa_Send) != 0)
     {
         printf("Failed. Error Code : %d\n", WSAGetLastError());
-        return;
+        return NULL;
     }
+
     else
         printf("Winsock initialized for sending.\n");
 
-    if ((send_Socket = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET)
+    if((send_Socket = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET)
     {
         printf("Could not create socket : %d\n", WSAGetLastError());
         WSACleanup();
-        return;
+        return NULL;
     }
+
     else
         printf("Send socket created.\n");
 
-    while(true)
+    //Set Pi Pico IP and port
+    pico_addr.sin_family = AF_INET;
+    pico_addr.sin_addr.s_addr = inet_addr(Pico_Ip_Address);
+    pico_addr.sin_port = htons(Pico_Port);
+
+    while (true)
     {
-        if(pico_IP_Detected)
-        {
-            if(GetAsyncKeyState('w') && 0x8000)
-                server_To_Pico_Data.direction = 1; //Drive forward
-
-            else if(GetAsyncKeyState('a') && 0x8000)
-                server_To_Pico_Data.direction = 3; //Turn left
-
-            else if(GetAsyncKeyState('s') && 0x8000)
-                server_To_Pico_Data.direction = 2; //Drive backward
-
-            else if(GetAsyncKeyState('d') && 0x8000)
-                server_To_Pico_Data.direction = 4; //Turn right
-
+        if (pico_IP_Detected)
+        {   
+            if (GetAsyncKeyState('w') & 0x8000)
+                server_To_Pico_Data.direction = 1;      // Drive forward
+            else if (GetAsyncKeyState('a') & 0x8000)
+                server_To_Pico_Data.direction = 3;      // Turn left
+            else if (GetAsyncKeyState('s') & 0x8000)
+                server_To_Pico_Data.direction = 2;      // Drive backward
+            else if (GetAsyncKeyState('d') & 0x8000)
+                server_To_Pico_Data.direction = 4;      // Turn right
             else
-                server_To_Pico_Data.direction = 5; // STOP
+                server_To_Pico_Data.direction = 5;      // STOP
 
-            server_To_Pico_Data.velocity = 250;
-            server_To_Pico_Data.status = 0; // 0-> Server and transmission is OK, 1 otherwise 
-
+            server_To_Pico_Data.velocity = 250;         // 250 is strongly recommended velocity
+            server_To_Pico_Data.status = 0;             // 0-> Server and transmission is OK, 1 otherwise 
 
             memcpy(buffer, &server_To_Pico_Data, sizeof(server_To_Pico_Frame_t));
 
-            int send_result = sendto(send_Socket, buffer, sizeof(server_To_Pico_Frame_t), 0, (struct sockaddr*)&client_addr, sizeof(client_addr));
-            if (send_result == SOCKET_ERROR)
+            int send_result = sendto(send_Socket, buffer, sizeof(server_To_Pico_Frame_t), 0, (struct sockaddr*)&pico_addr, sizeof(pico_addr));
+            
+            if(send_result == SOCKET_ERROR)
             {
                 printf("sendto failed with error code : %d\n", WSAGetLastError());
                 break;
             }
 
-            printf("Data sent to %s:%d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+            printf("Data sent to %s:%d\n", Pico_Ip_Address, Pico_Port);
             Sleep(175);
         }
     }
@@ -137,7 +181,7 @@ uint32_t INT_To_ASCII(uint32_t data)
     return data + '0'; 
 }
 
-void queue_Init(pico_To_Server_Queue *queue)
+void queue_Init(pico_To_Server_Queue_t *queue)
 {
     queue->head = 0;
     queue->tail = 0;
@@ -149,7 +193,7 @@ void queue_Init(pico_To_Server_Queue *queue)
     pthread_cond_init(&queue->not_full, NULL);
 }
 
-void queue_Add_Blocking(pico_To_Server_Queue *queue, pico_To_Server_Frame_t *data)
+void queue_Add_Blocking(pico_To_Server_Queue_t *queue, pico_To_Server_Frame_t *data)
 {
     pthread_mutex_lock(&queue->mutex);
 
@@ -169,7 +213,7 @@ void queue_Add_Blocking(pico_To_Server_Queue *queue, pico_To_Server_Frame_t *dat
     pthread_mutex_unlock(&queue->mutex);
 }
 
-void queue_Remove_Blocking(pico_To_Server_Queue *queue, pico_To_Server_Frame_t *data)
+void queue_Remove_Blocking(pico_To_Server_Queue_t *queue, pico_To_Server_Frame_t *data)
 {
     pthread_mutex_lock(&queue->mutex);
 

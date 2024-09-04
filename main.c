@@ -6,8 +6,8 @@
 int main (int argc, char **argv)
 {
     //wifi_Receive_Init();
-    wifi_Send_Init();
-
+    //wifi_Send_Init();
+    wifi_Transmission_Init();
     GtkApplication *app;
     int status;
 

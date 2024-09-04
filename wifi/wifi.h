@@ -13,6 +13,8 @@
 
 #define buffer_Size 4096
 #define queue_Size 25
+#define Pico_Ip_Address "192.168.137.144" 
+#define Pico_Port 4444
 
 typedef struct pico_To_Server_Frame_t{
     bool status;                       //Pi pico status -> 0-Active, 1-inactive
@@ -37,21 +39,27 @@ typedef struct server_To_Pico_Frame_t{
     int16_t velocity;                  //Vehicle velocity command
 }server_To_Pico_Frame_t;
 
-typedef struct pico_To_Server_Queue{
+typedef struct pico_To_Server_Queue_t{
     pico_To_Server_Frame_t *pico_To_Server_Data;
     pthread_mutex_t mutex;
     pthread_cond_t not_empty;
     pthread_cond_t not_full;
     uint32_t head, tail;
     uint32_t size;
-}pico_To_Server_Queue;
+}pico_To_Server_Queue_t;
+
+/// @brief wifi transmission initialization
+/// @param --
+void wifi_Transmission_Init(void);
 
 /// @brief Pico to server transmission initialization
 /// @param --
+/// @attention wifi_Receive_Init should be implemented before wifi_Send_Init bcs, wifi_receive_init looking for Pi pico IP address 
 void wifi_Receive_Init(void);
 
 /// @brief server to Pico transmission initialization
 /// @param --
+/// @attention wifi_Receive_Init should be implemented before wifi_Send_Init bcs, wifi_receive_init looking for Pi pico IP address 
 void wifi_Send_Init(void);
 
 /// @brief Integer type to ASCII conversion
@@ -61,5 +69,15 @@ uint32_t INT_To_ASCII(uint32_t data);
 
 /// @brief queue initialization
 /// @param queue queue data pointer
-void Queue_init(pico_To_Server_Queue *queue);
+void Queue_init(pico_To_Server_Queue_t *queue);
+
+void queue_Init(pico_To_Server_Queue_t *queue);
+
+void queue_Add_Blocking(pico_To_Server_Queue_t *queue, pico_To_Server_Frame_t *data);
+
+void queue_Remove_Blocking(pico_To_Server_Queue_t *queue, pico_To_Server_Frame_t *data);
+
+void* wifi_Receive_Thread(void* arg);
+void* wifi_Send_Thread(void* arg);
+
 #endif
