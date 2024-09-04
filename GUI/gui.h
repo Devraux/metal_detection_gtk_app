@@ -6,6 +6,8 @@
 #include <stdint.h>
 #include <math.h>
 #include <stdint.h>
+#include <winsock2.h>
+#include <windows.h>
 
 #include "../wifi/wifi.h"
 
@@ -18,16 +20,21 @@ typedef struct point_t{
     float Y;
 }point_t;
 
-typedef struct metal_Detections_t{
-    point_t point[max_Metal_Detection_Points];
-    uint32_t detections_counter;
-}metal_Detections_t;
+typedef struct device_Data_t{
+    point_t point[max_Metal_Detection_Points];  //Metal detection points from Pi Pico computations(not GPS)
+    uint32_t detections_counter;                //Metal detection counter
+    float device_X;                             //Current device X position
+    float device_Y;                             //Current device Y position
+    bool metal_Detected;                       //true -> metal detected 0 otherwise
+}device_Data_t;
 
 
-static void draw_Axes(cairo_t *cr);
+void draw_Axes(cairo_t *cr);
 
-static void on_draw(GtkWidget *widget, cairo_t *cr, gpointer data);
+void on_draw(GtkWidget *widget, cairo_t *cr, gpointer data);
 
 void activate(GtkApplication* app, gpointer user_data);
 
+
+gboolean refresh_detections(gpointer user_data);
 #endif

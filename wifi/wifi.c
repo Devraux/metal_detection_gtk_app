@@ -3,8 +3,7 @@
 //Pico IP detection check 
 bool pico_IP_Detected = false;
 
-//Receive and send buffer data
-pico_To_Server_Frame_t pico_To_Server_Data = {0};
+//Receive data buffer 
 server_To_Pico_Frame_t server_To_Pico_Data = {0};
 
 //Thread and Queue data
@@ -33,8 +32,8 @@ void wifi_Transmission_Init(void)
     }
 
     //Thread Joining
-    pthread_join(receive_thread, NULL);
-    pthread_join(send_thread, NULL);
+    //pthread_join(receive_thread, NULL);
+    //pthread_join(send_thread, NULL);
 }
 
 void* wifi_Receive_Thread(void* arg)
@@ -94,7 +93,7 @@ void* wifi_Receive_Thread(void* arg)
             }
 
             memcpy(&pico_To_Server_Data, buffer, sizeof(pico_To_Server_Frame_t));   // Copy received data from wifi buffer to structure
-            queue_Add_Blocking(&pico_To_Server_Queue, &pico_To_Server_Data);
+            queue_try_add(&pico_To_Server_Queue, &pico_To_Server_Data);
             //WIFI TRANSMISSION CHECK
             //printf("Received data from Pico:\n");
             //printf("Status: %d\n", pico_To_Server_Data.status);
@@ -233,4 +232,40 @@ void queue_Remove_Blocking(pico_To_Server_Queue_t *queue, pico_To_Server_Frame_t
 
     pthread_cond_signal(&queue->not_full);
     pthread_mutex_unlock(&queue->mutex);
+}
+
+bool queue_try_add(pico_To_Server_Queue_t *queue, pico_To_Server_Frame_t *data)
+{
+    bool added = false;
+    
+    pthread_mutex_lock(&queue->mutex);
+    
+    if ((queue->tail + 1) % queue->size != queue->head)
+    {
+        memcpy(&queue->pico_To_Server_Data[queue->tail], data, sizeof(pico_To_Server_Frame_t));
+        queue->tail = (queue->tail + 1) % queue->size;
+        added = true;
+        pthread_cond_signal(&queue->not_empty); 
+    }
+    
+    pthread_mutex_unlock(&queue->mutex);
+    return added;
+}
+
+bool queue_try_remove(pico_To_Server_Queue_t *queue, pico_To_Server_Frame_t *data)
+{
+    bool removed = false;
+    
+    pthread_mutex_lock(&queue->mutex);
+   
+    if (queue->head != queue->tail)
+    {
+        memcpy(data, &queue->pico_To_Server_Data[queue->head], sizeof(pico_To_Server_Frame_t));
+        queue->head = (queue->head + 1) % queue->size;
+        removed = true;
+        pthread_cond_signal(&queue->not_full); 
+    }
+    
+    pthread_mutex_unlock(&queue->mutex);
+    return removed;
 }
