@@ -5,7 +5,7 @@ pico_To_Server_Frame_t pico_To_Server_Data = {0};
 device_Data_t device_data = {0};
 
 guint timeout_id = 0;
-
+ 
 void draw_Axes(cairo_t *cr)
 {
     cairo_set_line_width(cr, 4);
