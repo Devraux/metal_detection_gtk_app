@@ -31,9 +31,6 @@ void wifi_Transmission_Init(void)
         return;
     }
 
-    //Thread Joining
-    //pthread_join(receive_thread, NULL);
-    //pthread_join(send_thread, NULL);
 }
 
 void* wifi_Receive_Thread(void* arg)
@@ -107,7 +104,7 @@ void* wifi_Receive_Thread(void* arg)
 
             memset(&pico_To_Server_Data, 0, sizeof(pico_To_Server_Frame_t));        // Clear buffer
         }
-        Sleep(215);
+        Sleep(155);
     }
 }
 
@@ -172,7 +169,7 @@ void* wifi_Send_Thread(void* arg)
             }
 
             //printf("Data sent to %s, Port: %d\n", Pico_Ip_Address, Pico_Port);
-            Sleep(175);
+            Sleep(135);
         }
     }
 }
