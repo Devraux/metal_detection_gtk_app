@@ -13,7 +13,7 @@
 
 #define buffer_Size 4096
 #define queue_Size 25
-#define Pico_Ip_Address "192.168.137.95" 
+#define Pico_Ip_Address "192.168.137.93" 
 #define Pico_Port 4444
 
 typedef struct pico_To_Server_Frame_t{

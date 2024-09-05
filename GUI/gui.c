@@ -153,42 +153,44 @@ void activate(GtkApplication* app, gpointer user_data) {
     GtkWidget *GPS_label;
     GtkWidget *save_exit_button;
 
+    ///CSS Loading from file <-> ../style.css
     GtkCssProvider *provider = gtk_css_provider_new();
     gtk_css_provider_load_from_path(provider, "../style.css", NULL);
     gtk_style_context_add_provider_for_screen(gdk_screen_get_default(), GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_USER);
 
     gtk_init(NULL, NULL);
 
-    /// Window
+    ///Window Initialization
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(window), "Metal Detection Application by Krzysztof Plonka");
     gtk_window_set_default_size(GTK_WINDOW(window), 1920, 1080);
     gtk_window_maximize(GTK_WINDOW(window));
     g_signal_connect(window, "destroy", G_CALLBACK(on_window_destroy), NULL);
 
-    /// Grid
+    /// Grid Initialization
     grid = gtk_grid_new();
     gtk_container_add(GTK_CONTAINER(window), grid);
 
-    /// Plotting place
+    /// Drawing area Initialization
     drawing_area = gtk_drawing_area_new();
     gtk_widget_set_size_request(drawing_area, 1320, 1020);
     gtk_grid_attach(GTK_GRID(grid), drawing_area, 1, 1, 20, 20);
+
+    /// GPS current data label
+    GPS_label = gtk_label_new("GPS device current pos.");
+    gtk_grid_attach(GTK_GRID(grid), GPS_label, 25, 1, 1, 1);
+
+    /// Save and Exit button
+    save_exit_button = gtk_button_new_with_label("Save and Exit");
+    gtk_grid_attach(GTK_GRID(grid), save_exit_button, 25, 2, 1, 1);
+    g_signal_connect(save_exit_button, "clicked", G_CALLBACK(on_save_and_exit_clicked), NULL);
+
     g_signal_connect(drawing_area, "draw", G_CALLBACK(on_draw), NULL);
+
     AppData *data = g_new(AppData, 1);
     data->drawing_area = drawing_area;
     data->gps_label = GPS_label;
 
-    /// GPS current position Info
-    GPS_label = gtk_label_new("GPS device current pos.");
-    gtk_grid_attach(GTK_GRID(grid), GPS_label, 25, 1, 1, 1);
-
-    // Save and Exit button
-    save_exit_button = gtk_button_new_with_label("Save and Exit");
-    gtk_grid_attach(GTK_GRID(grid), save_exit_button, 25, 2, 3, 1);
-    g_signal_connect(save_exit_button, "clicked", G_CALLBACK(on_save_and_exit_clicked), NULL);
-
-    /// Window show and refresh every 100ms
     gtk_widget_show_all(window);
     g_timeout_add(100, refresh_detections, data);
     gtk_main();
