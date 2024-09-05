@@ -39,14 +39,38 @@ typedef struct {
     GtkWidget *gps_label;
 } AppData;
 
+/// @brief draw Axes, Drawing box and map legend using Cairo
+/// @param cr Cairo data structure pointer
 void draw_Axes(cairo_t *cr);
 
+/// @brief draw Axes and detections(detections are refreshing every 100ms)
+/// @param widget - drawing area widget(in this case)
+/// @param cr - Cairo data structure pointer
+/// @param data data transferred to draw(refreshed detection points)
 void on_draw(GtkWidget *widget, cairo_t *cr, gpointer data);
 
+/// @brief Containing widgets and signals connection
+/// @param app - 
+/// @param user_data - 
 void activate(GtkApplication* app, gpointer user_data);
 
+/// @brief detection refresh callback and refresh current device GPS position
+/// @param user_data 
+/// @return true
 gboolean refresh_detections(gpointer user_data);
+
+/// @brief Destroy main window
+/// @param widget -
+/// @param data -
 void on_window_destroy(GtkWidget *widget, gpointer data);
+
+/// @brief Update GPS current position data(refresh subtitles in gtk app)
+/// @param gps_label -
+/// @param text - 
 void update_gps_label(GtkWidget *gps_label, const char *text);
+
+/// @brief Save and exit button functionalities
+/// @param widget -
+/// @param data -
 void on_save_and_exit_clicked(GtkWidget *widget, gpointer data);
 #endif
