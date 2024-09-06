@@ -2,6 +2,7 @@
 
 //Pico IP detection check 
 bool pico_IP_Detected = false;
+time_t last_time_received_frame;
 
 //Receive data buffer 
 server_To_Pico_Frame_t server_To_Pico_Data = {0};
@@ -33,7 +34,7 @@ void wifi_Transmission_Init(void)
 
 }
 
-void* wifi_Receive_Thread(void* arg)
+void *wifi_Receive_Thread(void* arg)
 {
     WSADATA wsa_Receive;
     SOCKET receive_Socket;
@@ -47,9 +48,9 @@ void* wifi_Receive_Thread(void* arg)
         printf("Failed. Error Code : %d\n", WSAGetLastError());
         return NULL;
     }
-
     else
         printf("Winsock initialized.\n");
+
 
     if((receive_Socket = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET)
     {
@@ -58,6 +59,9 @@ void* wifi_Receive_Thread(void* arg)
     }
     else
         printf("Socket created.\n");
+
+    ///Non blocking socket configuration
+    set_socket_nonblocking(receive_Socket);
 
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = INADDR_ANY;
@@ -70,17 +74,22 @@ void* wifi_Receive_Thread(void* arg)
         WSACleanup();
         return NULL;
     }
-
     else
         printf("Bind done. Server is listening on port 4444...\n");
+
 
     while(true)
     {
         int bytes_received = recvfrom(receive_Socket, buffer, buffer_Size, 0, (struct sockaddr*)&client_addr, &client_addr_len);
+        
+        if(difftime(time(NULL), last_time_received_frame) > 6)
+            pico_IP_Detected = false;
+        else
+            pico_IP_Detected = true;
+
 
         if(bytes_received == SOCKET_ERROR)
             printf("recvfrom failed with error code : %d\n", WSAGetLastError());
-        
         else
         {   
             if (!pico_IP_Detected)
@@ -103,12 +112,13 @@ void* wifi_Receive_Thread(void* arg)
             //printf("Metal Detection: %d\n", pico_To_Server_Data.metal_Detection);
 
             memset(&pico_To_Server_Data, 0, sizeof(pico_To_Server_Frame_t));        // Clear buffer
+            last_time_received_frame = time(NULL);
         }
         Sleep(155);
     }
 }
 
-void* wifi_Send_Thread(void* arg)
+void *wifi_Send_Thread(void* arg)
 {
     WSADATA wsa_Send;
     SOCKET send_Socket;
@@ -121,9 +131,9 @@ void* wifi_Send_Thread(void* arg)
         printf("Failed. Error Code : %d\n", WSAGetLastError());
         return NULL;
     }
-
     else
         printf("Winsock initialized for sending.\n");
+
 
     if((send_Socket = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET)
     {
@@ -131,14 +141,15 @@ void* wifi_Send_Thread(void* arg)
         WSACleanup();
         return NULL;
     }
-
     else
         printf("Send socket created.\n");
+
 
     //Set Pi Pico IP and port
     pico_addr.sin_family = AF_INET;
     pico_addr.sin_addr.s_addr = inet_addr(Pico_Ip_Address);
     pico_addr.sin_port = htons(Pico_Port);
+
 
     while (true)
     {
@@ -159,7 +170,6 @@ void* wifi_Send_Thread(void* arg)
             server_To_Pico_Data.status = 0;             // 0-> Server and transmission is OK, 1 otherwise 
             
             memcpy(buffer, &server_To_Pico_Data, sizeof(server_To_Pico_Frame_t));
-
             int send_result = sendto(send_Socket, buffer, sizeof(server_To_Pico_Frame_t), 0, (struct sockaddr*)&pico_addr, sizeof(pico_addr));
             
             if(send_result == SOCKET_ERROR)
@@ -265,4 +275,9 @@ bool queue_try_remove(pico_To_Server_Queue_t *queue, pico_To_Server_Frame_t *dat
     
     pthread_mutex_unlock(&queue->mutex);
     return removed;
+}
+
+void set_socket_nonblocking(SOCKET socket) {
+    unsigned long mode = 1;
+    ioctlsocket(socket, FIONBIO, &mode);
 }
