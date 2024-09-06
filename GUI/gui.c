@@ -59,6 +59,14 @@ void draw_Axes(cairo_t *cr)
         if (i == 0) continue;
 
         int x = x_origin + i * scale_spacing_x;
+        // X Axis gray spacing lines
+        cairo_set_source_rgba(cr, 0, 0, 0, 0.2);
+        cairo_set_line_width(cr, 2);
+        cairo_move_to(cr, x, 10);
+        cairo_line_to(cr, x, 1000);
+        cairo_stroke(cr);
+        cairo_set_source_rgba(cr, 0, 0, 0, 1);
+        cairo_set_line_width(cr, 4);
 
         if (i % 5 == 0)
         {
@@ -88,6 +96,15 @@ void draw_Axes(cairo_t *cr)
             continue;
 
         int y = y_origin - i * scale_spacing_y;
+
+        // Y Axis gray spacing lines
+        cairo_set_source_rgba(cr, 0, 0, 0, 0.2);
+        cairo_set_line_width(cr, 2);
+        cairo_move_to(cr, 10, y);
+        cairo_line_to(cr, 1300,  y);
+        cairo_stroke(cr);
+        cairo_set_source_rgba(cr, 0, 0, 0, 1);
+        cairo_set_line_width(cr, 4);
 
         if (i % 5 == 0)
         {
@@ -225,13 +242,14 @@ gboolean refresh_detections(gpointer user_data)
 
     ///Print GPS received data
     char *gps_text = g_strdup_printf(
-        "GPS device current position. :\nLatitude: %d°%d' %c\nLongitude: %d°%d' %c",
+        "GPS device current position. :\nLatitude: %d°%d' %c\nLongitude: %d°%d' %c\nNumber of metal detections: %d",
         pico_To_Server_Data.GPS_Latitude,
         pico_To_Server_Data.GPS_Latitude_dec,
         INT_To_ASCII(pico_To_Server_Data.GPS_Latitude_Direction),
         pico_To_Server_Data.GPS_Longitude,
         pico_To_Server_Data.GPS_Longitude_dec,
-        INT_To_ASCII(pico_To_Server_Data.GPS_Longitude_Direction)
+        INT_To_ASCII(pico_To_Server_Data.GPS_Longitude_Direction),
+        device_data.detections_counter
     );
     gtk_label_set_text(GTK_LABEL(gps_label), gps_text);
     g_free(gps_text);

@@ -4,7 +4,7 @@ label {
 }
 
 button{
-    color: rgb(0, 0, 0);                    
+    color: rgb(0, 0, 0);   color: rgb(73, 71, 71);                 
     min-width: 570px;                    
     padding: 5px;                        
     font-size: 20px;                     

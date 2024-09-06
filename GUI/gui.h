@@ -13,7 +13,7 @@
 
 
 
-#define max_Metal_Detection_Points 300 
+#define max_Metal_Detection_Points 500 
 
 typedef struct point_t{
     float X;                        //X position calculated by Pi Pico and sensors like mpu6050 
