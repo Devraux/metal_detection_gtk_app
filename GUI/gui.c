@@ -32,8 +32,8 @@ void draw_Axes(cairo_t *cr)
     cairo_show_text(cr, "Y[cm]"); 
 
     // Plot Legend Subtitles
-    cairo_set_font_size(cr, 20);  
-    cairo_select_font_face(cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL); 
+    cairo_set_font_size(cr, 23);  
+    cairo_select_font_face(cr, "Impact", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL); 
     cairo_move_to(cr, 1140, 955); 
     cairo_show_text(cr, " - Vehicle pos."); 
     cairo_move_to(cr, 1140, 985);  
@@ -41,10 +41,10 @@ void draw_Axes(cairo_t *cr)
     cairo_set_source_rgb(cr, 0, 0, 0);
     cairo_set_line_width(cr, 1);
 
-    cairo_arc(cr, 1135, 980, 5, 0, 2 * 3.14); 
+    cairo_arc(cr, 1135, 977, 5, 0, 2 * 3.14); 
     cairo_fill(cr);
     cairo_set_source_rgb(cr, 1, 0, 0);
-    cairo_arc(cr, 1135, 950, 5, 0, 2 * 3.14); 
+    cairo_arc(cr, 1135, 947, 5, 0, 2 * 3.14); 
     cairo_fill(cr);
     cairo_set_line_width(cr, 4);
     cairo_set_source_rgb(cr, 0, 0, 0);
@@ -147,11 +147,11 @@ void draw_Detections(cairo_t *cr, const device_Data_t *device_Data)
         cairo_fill(cr);
     }
 
-        //device position
+        //device position based on mpu6050 sensor
         cairo_set_source_rgb(cr, 1, 0, 0); //Red colour(red dot on drawing area)
         float device_x = x_origin + ((device_Data->device_X * 100.0f) * scale_spacing_x / 10.0f);
         float device_y = y_origin - ((device_Data->device_Y * 100.0f) * scale_spacing_y / 10.0f);    
-        cairo_arc(cr, device_x, device_y, 5, 0, 2 * 3.14); 
+        cairo_arc(cr, device_x, device_y, 10, 0, 2 * 3.14); 
         cairo_fill(cr);
         cairo_set_source_rgb(cr, 0, 0, 0);
 
@@ -163,12 +163,15 @@ void on_draw(GtkWidget *widget, cairo_t *cr, gpointer data)
     draw_Detections(cr, &device_data); 
 }
 
-void activate(GtkApplication* app, gpointer user_data) {
+void activate(GtkApplication* app, gpointer user_data)
+{
     GtkWidget *window;
     GtkWidget *grid;
     GtkWidget *drawing_area;
     GtkWidget *GPS_label;
     GtkWidget *save_exit_button;
+    GtkWidget *scanning_status_label;
+    GtkWidget *connection_status_label;
 
     ///CSS Loading from file <-> ../style.css
     GtkCssProvider *provider = gtk_css_provider_new();
@@ -195,11 +198,19 @@ void activate(GtkApplication* app, gpointer user_data) {
 
     /// GPS current data label
     GPS_label = gtk_label_new("GPS device current pos.");
-    gtk_grid_attach(GTK_GRID(grid), GPS_label, 25, 1, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), GPS_label, 23, 1, 1, 1);
+
+    ///scanning status label
+    scanning_status_label = gtk_label_new("Scanning status: OK");
+    gtk_grid_attach(GTK_GRID(grid), scanning_status_label, 23, 2, 1, 1);
+
+    ///connection status label
+    connection_status_label = gtk_label_new("Connection status: OK");
+    gtk_grid_attach(GTK_GRID(grid), connection_status_label, 23, 4, 1, 1);
 
     /// Save and Exit button
     save_exit_button = gtk_button_new_with_label("Save and Exit");
-    gtk_grid_attach(GTK_GRID(grid), save_exit_button, 25, 2, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), save_exit_button, 23, 6, 1, 1);
     g_signal_connect(save_exit_button, "clicked", G_CALLBACK(on_save_and_exit_clicked), NULL);
 
     g_signal_connect(drawing_area, "draw", G_CALLBACK(on_draw), NULL);
@@ -207,6 +218,8 @@ void activate(GtkApplication* app, gpointer user_data) {
     AppData *data = g_new(AppData, 1);
     data->drawing_area = drawing_area;
     data->gps_label = GPS_label;
+    data->scanning_status_label = scanning_status_label;
+    data->connection_status_label = connection_status_label;
 
     gtk_widget_show_all(window);
     g_timeout_add(100, refresh_detections, data);
@@ -219,6 +232,8 @@ gboolean refresh_detections(gpointer user_data)
     AppData *data = (AppData *)user_data;
     GtkWidget *drawing_area = data->drawing_area;
     GtkWidget *gps_label = data->gps_label;
+    GtkWidget *scanning_status_label = data->scanning_status_label;
+    GtkWidget *connection_status_label = data->connection_status_label;
 
     /// Try remove data from Queue(receive buffer)
     queue_try_remove(&pico_To_Server_Queue, &pico_To_Server_Data);
@@ -240,19 +255,59 @@ gboolean refresh_detections(gpointer user_data)
         device_data.detections_counter++;
     }
 
+    if(device_data.device_X <= 2.5f || device_data.device_X >= -2.5f || device_data.device_Y <= 2.5f || device_data.device_Y >= -2.5f)
+    {
+        gtk_label_set_text(GTK_LABEL(scanning_status_label), "Scanning status: OK");
+        GtkStyleContext *context = gtk_widget_get_style_context(scanning_status_label);
+        gtk_style_context_remove_class(context, "scanning-status-out-of-range");
+        gtk_style_context_add_class(context, "scanning-status-ok");
+    }
+    else if(device_data.device_X >= 2.5f || device_data.device_X <= -2.5f || device_data.device_Y >= 2.5f || device_data.device_Y <= -2.5f)
+    {   
+        gtk_label_set_text(GTK_LABEL(scanning_status_label), "Scanning status: Out of Range");
+        GtkStyleContext *context = gtk_widget_get_style_context(scanning_status_label);
+        gtk_style_context_remove_class(context, "scanning-status-ok");
+        gtk_style_context_add_class(context, "scanning-status-out-of-range");        
+    }
+
+
+    if(pico_IP_Detected == true)
+    {
+        gtk_label_set_text(GTK_LABEL(connection_status_label), "Connection status: OK");
+        GtkStyleContext *context = gtk_widget_get_style_context(connection_status_label);
+        gtk_style_context_remove_class(context, "connection-status-device-not-found");
+        gtk_style_context_add_class(context, "connection-status-ok");
+    }
+    else if(pico_IP_Detected == false)
+    {   
+        gtk_label_set_text(GTK_LABEL(connection_status_label), "Connection status: device not found");
+        GtkStyleContext *context = gtk_widget_get_style_context(connection_status_label);
+        gtk_style_context_remove_class(context, "connection-status-ok");
+        gtk_style_context_add_class(context, "connection-status-device-not-found");        
+    } 
+
+
+
+    ///// Device status label
+    //if(device_data.device_X >= 250 || device_data.device_X <= -250 || device_data.device_Y > 250 || device_data.device_Y <= -250)
+    //    gtk_label_set_text(GTK_LABEL(status_label), "Status: Metal Detected");
+    //else    
+    //    gtk_label_set_text(GTK_LABEL(status_label), "Status: OK");
+
     ///Print GPS received data
-    char *gps_text = g_strdup_printf(
-        "GPS device current position. :\nLatitude: %d°%d' %c\nLongitude: %d°%d' %c\nNumber of metal detections: %d",
+    char *device_data_text_box = g_strdup_printf(
+        "GPS device current position. :\nLatitude: %d°%d' %c\nLongitude: %d°%d' %c\n\nDevice XY pos. :\nX: %.2f[cm], Y: %.2f[cm]\n",
         pico_To_Server_Data.GPS_Latitude,
         pico_To_Server_Data.GPS_Latitude_dec,
         INT_To_ASCII(pico_To_Server_Data.GPS_Latitude_Direction),
         pico_To_Server_Data.GPS_Longitude,
         pico_To_Server_Data.GPS_Longitude_dec,
         INT_To_ASCII(pico_To_Server_Data.GPS_Longitude_Direction),
-        device_data.detections_counter
+        device_data.device_X * 100.0f,
+        device_data.device_Y * 100.0f
     );
-    gtk_label_set_text(GTK_LABEL(gps_label), gps_text);
-    g_free(gps_text);
+    gtk_label_set_text(GTK_LABEL(gps_label), device_data_text_box);
+    g_free(device_data_text_box);
     gtk_widget_queue_draw(drawing_area);
 
     return true;

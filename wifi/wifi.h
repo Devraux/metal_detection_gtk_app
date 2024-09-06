@@ -13,7 +13,7 @@
 
 #define buffer_Size 4096
 #define queue_Size 25
-#define Pico_Ip_Address "192.168.137.78" 
+#define Pico_Ip_Address "192.168.137.37" 
 #define Pico_Port 4444
 
 typedef struct pico_To_Server_Frame_t{
@@ -30,7 +30,7 @@ typedef struct pico_To_Server_Frame_t{
 	uint32_t GPS_Longitude_Direction;  //GPS current Longitude Direction
  
     bool metal_Detection;              //1 -> metal detected 0 otherwise
-    //uint32_t metal_Detection_Counter;  //metal Detection Counter 
+    //uint32_t metal_Detection_Counter;//metal Detection Counter 
 }pico_To_Server_Frame_t; 
 
 typedef struct server_To_Pico_Frame_t{
@@ -49,7 +49,7 @@ typedef struct pico_To_Server_Queue_t{
 }pico_To_Server_Queue_t;
 
 extern pico_To_Server_Queue_t pico_To_Server_Queue;
-
+extern bool pico_IP_Detected;
 
 /// @brief wifi transmission initialization
 /// @param --

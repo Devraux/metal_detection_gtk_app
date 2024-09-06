@@ -37,6 +37,8 @@ typedef struct device_Data_t{
 typedef struct {
     GtkWidget *drawing_area;
     GtkWidget *gps_label;
+    GtkWidget *scanning_status_label;  
+    GtkWidget *connection_status_label;
 } AppData;
 
 /// @brief draw Axes, Drawing box and map legend using Cairo
