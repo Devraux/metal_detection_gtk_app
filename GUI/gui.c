@@ -255,15 +255,15 @@ gboolean refresh_detections(gpointer user_data)
         device_data.detections_counter++;
     }
 
-    if(device_data.device_X <= 2.5f || device_data.device_X >= -2.5f || device_data.device_Y <= 2.5f || device_data.device_Y >= -2.5f)
-    {
+    if(device_data.device_X <= 2.5f && device_data.device_X >= -2.5f && device_data.device_Y <= 2.5f && device_data.device_Y >= -2.5f)
+    {printf("good range\n");
         gtk_label_set_text(GTK_LABEL(scanning_status_label), "Scanning status: OK");
         GtkStyleContext *context = gtk_widget_get_style_context(scanning_status_label);
         gtk_style_context_remove_class(context, "scanning-status-out-of-range");
         gtk_style_context_add_class(context, "scanning-status-ok");
     }
     else if(device_data.device_X >= 2.5f || device_data.device_X <= -2.5f || device_data.device_Y >= 2.5f || device_data.device_Y <= -2.5f)
-    {   
+    {   printf("bad range\n");
         gtk_label_set_text(GTK_LABEL(scanning_status_label), "Scanning status: Out of Range");
         GtkStyleContext *context = gtk_widget_get_style_context(scanning_status_label);
         gtk_style_context_remove_class(context, "scanning-status-ok");
@@ -273,7 +273,7 @@ gboolean refresh_detections(gpointer user_data)
 
     if(pico_IP_Detected == true)
     {
-        gtk_label_set_text(GTK_LABEL(connection_status_label), "Connection status: OK");
+        gtk_label_set_text(GTK_LABEL(connection_status_label), "Connection status: OK, IP addr.:" Pico_Ip_Address);
         GtkStyleContext *context = gtk_widget_get_style_context(connection_status_label);
         gtk_style_context_remove_class(context, "connection-status-device-not-found");
         gtk_style_context_add_class(context, "connection-status-ok");
@@ -334,7 +334,7 @@ void on_save_and_exit_clicked(GtkWidget *widget, gpointer data) {
                    "Attention!!!\n"
                    "X, Y data is only for reference and may differ significantly from the actual location of the metal object,\n"
                    "therefore it is recommended to use GPS data for a more accurate estimate of the location of the metal occurrence.\n"
-                   "Thank you for using my application\n\n");
+                   "Thank you for using my application.\n\n");
     for (uint32_t i = 0; i < device_data.detections_counter; i++)
     {
         fprintf(file, "Detection %d:\n", i + 1);
