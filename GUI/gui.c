@@ -256,14 +256,14 @@ gboolean refresh_detections(gpointer user_data)
     }
 
     if(device_data.device_X <= 2.5f && device_data.device_X >= -2.5f && device_data.device_Y <= 2.5f && device_data.device_Y >= -2.5f)
-    {printf("good range\n");
+    {
         gtk_label_set_text(GTK_LABEL(scanning_status_label), "Scanning status: OK");
         GtkStyleContext *context = gtk_widget_get_style_context(scanning_status_label);
         gtk_style_context_remove_class(context, "scanning-status-out-of-range");
         gtk_style_context_add_class(context, "scanning-status-ok");
     }
     else if(device_data.device_X >= 2.5f || device_data.device_X <= -2.5f || device_data.device_Y >= 2.5f || device_data.device_Y <= -2.5f)
-    {   printf("bad range\n");
+    {   
         gtk_label_set_text(GTK_LABEL(scanning_status_label), "Scanning status: Out of Range");
         GtkStyleContext *context = gtk_widget_get_style_context(scanning_status_label);
         gtk_style_context_remove_class(context, "scanning-status-ok");
