@@ -287,25 +287,41 @@ gboolean refresh_detections(gpointer user_data)
     } 
 
 
+    float latitude = (float)pico_To_Server_Data.GPS_Latitude / 100.0f;
+    uint32_t latitude_dec = pico_To_Server_Data.GPS_Latitude_dec;
+    char lat_direction = INT_To_ASCII(pico_To_Server_Data.GPS_Latitude_Direction);
 
-    ///// Device status label
-    //if(device_data.device_X >= 250 || device_data.device_X <= -250 || device_data.device_Y > 250 || device_data.device_Y <= -250)
-    //    gtk_label_set_text(GTK_LABEL(status_label), "Status: Metal Detected");
-    //else    
-    //    gtk_label_set_text(GTK_LABEL(status_label), "Status: OK");
+    float longitude = (float)pico_To_Server_Data.GPS_Longitude / 100.0f;
+    uint32_t longitude_dec = pico_To_Server_Data.GPS_Longitude_dec;
+    char lon_direction = INT_To_ASCII(pico_To_Server_Data.GPS_Longitude_Direction);
 
-    ///Print GPS received data
+    float device_X_cm = device_data.device_X * 100.0f;
+    float device_Y_cm = device_data.device_Y * 100.0f;
+
+    //printf("Latitude: %.2f, Latitude_dec: %.2f, Longitude: %.2f, Longitude_dec: %.2f\n", 
+    //       latitude, latitude_dec, longitude, longitude_dec);
+
+    if(latitude < -90.0f || latitude > 90.0f)
+    {
+        latitude = 0.0f;  
+        latitude_dec = 0;  
+        lat_direction = 'N'; 
+    }
+
+    if(longitude < -180.0f || longitude > 180.0f) 
+    {
+        longitude = 0.0f;  
+        longitude_dec = 0;  
+        lon_direction = 'E';
+    }
+
     char *device_data_text_box = g_strdup_printf(
-        "GPS device current position. :\nLatitude: %d°%d' %c\nLongitude: %d°%d' %c\n\nDevice XY pos. :\nX: %.2f[cm], Y: %.2f[cm]\n",
-        pico_To_Server_Data.GPS_Latitude,
-        pico_To_Server_Data.GPS_Latitude_dec,
-        INT_To_ASCII(pico_To_Server_Data.GPS_Latitude_Direction),
-        pico_To_Server_Data.GPS_Longitude,
-        pico_To_Server_Data.GPS_Longitude_dec,
-        INT_To_ASCII(pico_To_Server_Data.GPS_Longitude_Direction),
-        device_data.device_X * 100.0f,
-        device_data.device_Y * 100.0f
+        "GPS device current position. :\nLatitude: %.2f%d° %c\nLongitude: %.2f%d° %c\n\nDevice XY pos. :\nX: %.2f[cm], Y: %.2f[cm]\n",
+        latitude, latitude_dec, lat_direction,
+        longitude, longitude_dec, lon_direction,
+        device_X_cm, device_Y_cm
     );
+
     gtk_label_set_text(GTK_LABEL(gps_label), device_data_text_box);
     g_free(device_data_text_box);
     gtk_widget_queue_draw(drawing_area);
@@ -323,26 +339,67 @@ void on_window_destroy(GtkWidget *widget, gpointer data)
     gtk_main_quit();
 }
 
-void on_save_and_exit_clicked(GtkWidget *widget, gpointer data) {
+void on_save_and_exit_clicked(GtkWidget *widget, gpointer data) 
+{
     FILE *file = fopen("detections.txt", "w");
     if (file == NULL) {
         g_print("Error opening file for writing.\n");
         return;
     }
-    fprintf(file, "Welcome to the metal detection vehicle application !!!\n" 
-                   "Below is a list of potential metal occurrences recorded by your device.\n" 
-                   "Attention!!!\n"
-                   "X, Y data is only for reference and may differ significantly from the actual location of the metal object,\n"
-                   "therefore it is recommended to use GPS data for a more accurate estimate of the location of the metal occurrence.\n"
-                   "Thank you for using my application.\n\n");
+    
+    fprintf(file, "Welcome to the metal detection vehicle application !!!\n"
+                  "Below is a list of potential metal occurrences recorded by your device.\n"
+                  "Attention!!!\n"
+                  "X, Y data is only for reference and may differ significantly from the actual location of the metal object,\n"
+                  "therefore it is recommended to use GPS data for a more accurate estimate of the location of the metal occurrence.\n"
+                  "Thank you for using my application.\n\n");
+
+
+    float prev_X_pos = 0.0f, prev_Y_Pos = 0.0f;
     for (uint32_t i = 0; i < device_data.detections_counter; i++)
     {
+        if(device_data.point[i].X == prev_X_pos || device_data.point[i].Y ==prev_Y_Pos)
+            continue;
+        
         fprintf(file, "Detection %d:\n", i + 1);
         fprintf(file, "  X: %.2f\n", device_data.point[i].X);
         fprintf(file, "  Y: %.2f\n", device_data.point[i].Y);
-        fprintf(file, "  Latitude: %.2f°%d' %c\n", device_data.point[i].Latitude, (int)device_data.point[i].Latitude_dec, device_data.point[i].Latitude_Direction == 0 ? 'N' : 'S');
-        fprintf(file, "  Longitude: %.2f°%d' %c\n", device_data.point[i].Longitude, (int)device_data.point[i].Longitude_dec, device_data.point[i].Longitude_Direction == 0 ? 'E' : 'W');
+        
+        float latitude = (float)pico_To_Server_Data.GPS_Latitude / 100.0f;
+        uint32_t latitude_dec = pico_To_Server_Data.GPS_Latitude_dec;
+        char lat_direction = INT_To_ASCII(pico_To_Server_Data.GPS_Latitude_Direction);
+
+        float longitude = (float)pico_To_Server_Data.GPS_Longitude / 100.0f;
+        uint32_t longitude_dec = pico_To_Server_Data.GPS_Longitude_dec;
+        char lon_direction = INT_To_ASCII(pico_To_Server_Data.GPS_Longitude_Direction);
+
+        if(latitude < -90.0f || latitude > 90.0f)
+        {
+            latitude = 0.0f;  
+            latitude_dec = 0;  
+            lat_direction = 'N'; 
+        }
+
+        if(longitude < -180.0f || longitude > 180.0f) 
+        {
+            longitude = 0.0f;  
+            longitude_dec = 0;  
+            lon_direction = 'E';
+        }
+
+        fprintf(file, "  Latitude: %.2f%d° %c\n", 
+                latitude, 
+                latitude_dec, 
+                pico_To_Server_Data.GPS_Latitude_Direction == 30 ? 'N' : 'S');
+        
+        fprintf(file, "  Longitude: %.2f%d° %c\n", 
+                longitude, 
+                longitude_dec, 
+                pico_To_Server_Data.GPS_Longitude_Direction == 21 ? 'E' : 'W');
+        
         fprintf(file, "\n");
+
+        prev_X_pos = device_data.point[i].X , prev_Y_Pos = device_data.point[i].Y;
     }
 
     fclose(file);

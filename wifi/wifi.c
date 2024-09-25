@@ -215,8 +215,6 @@ void queue_Add_Blocking(pico_To_Server_Queue_t *queue, pico_To_Server_Frame_t *d
     queue->pico_To_Server_Data[queue->tail].GPS_Longitude_dec        = data->GPS_Longitude_dec;
     queue->pico_To_Server_Data[queue->tail].GPS_Longitude_Direction  = data->GPS_Longitude_Direction;
 
-    queue->tail = (queue->tail + 1) % queue->size;
-
     pthread_cond_signal(&queue->not_empty);
     pthread_mutex_unlock(&queue->mutex);
 }
