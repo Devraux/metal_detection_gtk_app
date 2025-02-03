@@ -11,6 +11,9 @@ server_To_Pico_Frame_t server_To_Pico_Data = {0};
 pthread_t receive_thread, send_thread;
 pico_To_Server_Queue_t pico_To_Server_Queue;
 
+SOCKET receive_Socket; 
+SOCKET send_Socket;    
+
 void wifi_Transmission_Init(void)
 {
     //Queue Initialization
@@ -31,13 +34,11 @@ void wifi_Transmission_Init(void)
         printf("send task Error <-> Error code: %d\n", result);
         return;
     }
-
 }
 
-void *wifi_Receive_Thread(void* arg)
-{
+void *wifi_Receive_Thread(void* arg){
     WSADATA wsa_Receive;
-    SOCKET receive_Socket;
+    //SOCKET receive_Socket;
     struct sockaddr_in server_addr, client_addr;
     int client_addr_len = sizeof(client_addr);
     char buffer[buffer_Size];
@@ -121,7 +122,7 @@ void *wifi_Receive_Thread(void* arg)
 void *wifi_Send_Thread(void* arg)
 {
     WSADATA wsa_Send;
-    SOCKET send_Socket;
+    //SOCKET send_Socket;
     struct sockaddr_in pico_addr;
     char buffer[buffer_Size];
     server_To_Pico_Frame_t server_To_Pico_Data = {0};
@@ -275,7 +276,26 @@ bool queue_try_remove(pico_To_Server_Queue_t *queue, pico_To_Server_Frame_t *dat
     return removed;
 }
 
-void set_socket_nonblocking(SOCKET socket) {
+void set_socket_nonblocking(SOCKET socket)
+{
     unsigned long mode = 1;
     ioctlsocket(socket, FIONBIO, &mode);
+}
+
+void socket_exit(void)
+{
+    closesocket(receive_Socket);
+    closesocket(send_Socket);
+    WSACleanup();
+}
+
+void thread_exit(void)
+{
+    // RECEIVE THREAD EXIT //
+    pthread_cancel(receive_thread); 
+    pthread_join(receive_thread, NULL); 
+
+    // SEND THREAD EXIT //
+    pthread_cancel(send_thread); 
+    pthread_join(send_thread, NULL); 
 }

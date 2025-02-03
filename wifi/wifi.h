@@ -13,7 +13,7 @@
 
 #define buffer_Size 4096
 #define queue_Size 25
-#define Pico_Ip_Address "192.168.137.86"  
+#define Pico_Ip_Address "192.168.137.64"  
 #define Pico_Port 4444
 
 typedef struct pico_To_Server_Frame_t{
@@ -92,7 +92,16 @@ void queue_Add_Blocking(pico_To_Server_Queue_t *queue, pico_To_Server_Frame_t *d
 /// @param data data place where data will be saved
 void queue_Remove_Blocking(pico_To_Server_Queue_t *queue, pico_To_Server_Frame_t *data);
 
+/// @brief SIMPLE queue try add function
+/// @param queue 
+/// @param data data to add to queue
+/// @return true -> data successful added, false otherwise 
 bool queue_try_add(pico_To_Server_Queue_t *queue, pico_To_Server_Frame_t *data);
+
+/// @brief SIMPLE queue try remove function
+/// @param queue 
+/// @param data data to remove from queue
+/// @return true -> data successful added, false otherwise 
 bool queue_try_remove(pico_To_Server_Queue_t *queue, pico_To_Server_Frame_t *data);
 
 /// @brief Receive thread
@@ -105,4 +114,11 @@ void* wifi_Receive_Thread(void* arg);
 /// @return true
 void* wifi_Send_Thread(void* arg);
 
+/// @brief close receive and send thread
+/// @param -- 
+void thread_exit(void);
+
+/// @brief close socket
+/// @param  --
+void socket_exit(void);
 #endif

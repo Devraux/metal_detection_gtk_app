@@ -1,9 +1,7 @@
 #include "gui.h"
 
 pico_To_Server_Frame_t pico_To_Server_Data = {0};
-
 device_Data_t device_data = {0};
-
 guint timeout_id = 0;
  
 void draw_Axes(cairo_t *cr)
@@ -299,20 +297,20 @@ gboolean refresh_detections(gpointer user_data)
     float device_Y_cm = device_data.device_Y * 100.0f;
 
     //printf("Latitude: %.2f, Latitude_dec: %.2f, Longitude: %.2f, Longitude_dec: %.2f\n", 
-    //       latitude, latitude_dec, longitude, longitude_dec);
+    //latitude, latitude_dec, longitude, longitude_dec);
 
     if(latitude < -90.0f || latitude > 90.0f)
     {
         latitude = 0.0f;  
         latitude_dec = 0;  
-        lat_direction = 'N'; 
+        lat_direction = '0'; 
     }
 
     if(longitude < -180.0f || longitude > 180.0f) 
     {
         longitude = 0.0f;  
         longitude_dec = 0;  
-        lon_direction = 'E';
+        lon_direction = '0';
     }
 
     char *device_data_text_box = g_strdup_printf(
@@ -336,7 +334,10 @@ void on_window_destroy(GtkWidget *widget, gpointer data)
         timeout_id = 0;  
     }
 
-    gtk_main_quit();
+
+    socket_exit();  // terminate sockets
+    thread_exit();  // terminate threads
+    gtk_main_quit();// terminate GTK 
 }
 
 void on_save_and_exit_clicked(GtkWidget *widget, gpointer data) 
@@ -354,14 +355,15 @@ void on_save_and_exit_clicked(GtkWidget *widget, gpointer data)
                   "therefore it is recommended to use GPS data for a more accurate estimate of the location of the metal occurrence.\n"
                   "Thank you for using my application.\n\n");
 
-
+    int detect_counter = 1;
     float prev_X_pos = 0.0f, prev_Y_Pos = 0.0f;
     for (uint32_t i = 0; i < device_data.detections_counter; i++)
     {
         if(device_data.point[i].X == prev_X_pos || device_data.point[i].Y ==prev_Y_Pos)
+        {
             continue;
-        
-        fprintf(file, "Detection %d:\n", i + 1);
+        }
+        fprintf(file, "Detection %d:\n", detect_counter);
         fprintf(file, "  X: %.2f\n", device_data.point[i].X);
         fprintf(file, "  Y: %.2f\n", device_data.point[i].Y);
         
@@ -400,6 +402,7 @@ void on_save_and_exit_clicked(GtkWidget *widget, gpointer data)
         fprintf(file, "\n");
 
         prev_X_pos = device_data.point[i].X , prev_Y_Pos = device_data.point[i].Y;
+        detect_counter++;
     }
 
     fclose(file);
