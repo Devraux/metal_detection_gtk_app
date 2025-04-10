@@ -1,4 +1,3 @@
-# Pliki i katalogi generowane przez kompilator
 *.o
 *.obj
 *.exe
@@ -9,7 +8,6 @@
 *.so
 *.dylib
 
-# Katalogi generowane przez kompilator
 build/
 bin/
 lib/

@@ -1,5 +1,5 @@
-#ifndef _WIFI_
-#define _WIFI_
+#ifndef _QUEUE_
+#define _QUEUE_
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -9,12 +9,9 @@
 #include <winsock2.h>
 #include <windows.h>
 #include <pthread.h>
-//#include <unistd.h>
 
-#define buffer_Size 4096
 #define queue_Size 25
-#define Pico_Ip_Address "192.168.137.64"  
-#define Pico_Port 4444
+
 
 typedef struct pico_To_Server_Frame_t{
     bool status;                       //Pi pico status -> 0-Active, 1-inactive
@@ -48,47 +45,35 @@ typedef struct pico_To_Server_Queue_t{
     uint32_t size;
 }pico_To_Server_Queue_t;
 
-extern pico_To_Server_Queue_t pico_To_Server_Queue;
-extern bool pico_IP_Detected;
 
-/// @brief wifi transmission initialization
-/// @param --
-void wifi_Transmission_Init(void);
+/// @brief queue initialization
+/// @param queue queue data pointer
+void Queue_init(pico_To_Server_Queue_t *queue);
 
-/// @brief Pico to server transmission initialization
-/// @param --
-/// @attention wifi_Receive_Init should be implemented before wifi_Send_Init bcs, wifi_receive_init looking for Pi pico IP address 
-void wifi_Receive_Init(void);
+/// @brief queue init
+/// @param queue pointer to queue data structure
+void queue_Init(pico_To_Server_Queue_t *queue);
 
-/// @brief server to Pico transmission initialization
-/// @param --
-/// @attention wifi_Receive_Init should be implemented before wifi_Send_Init bcs, wifi_receive_init looking for Pi pico IP address 
-void wifi_Send_Init(void);
+/// @brief queue add data to queue buffer and wait until data will be added 
+/// @param queue pointer to queue data structure 
+/// @param data data to add 
+void queue_Add_Blocking(pico_To_Server_Queue_t *queue, pico_To_Server_Frame_t *data);
 
-/// @brief Integer type to ASCII conversion
-/// @param data int input data
-/// @return converted data(ASCII)
-uint32_t INT_To_ASCII(uint32_t data);
+/// @brief queue remove data from queue buffer and wait until data will be removed
+/// @param queue pointer to queue data structure
+/// @param data data place where data will be saved
+void queue_Remove_Blocking(pico_To_Server_Queue_t *queue, pico_To_Server_Frame_t *data);
 
-/// @brief Set socket in non blocking configuration
-/// @param socket - socket structure
-void set_socket_nonblocking(SOCKET socket);
+/// @brief SIMPLE queue try add function
+/// @param queue 
+/// @param data data to add to queue
+/// @return true -> data successful added, false otherwise 
+bool queue_try_add(pico_To_Server_Queue_t *queue, pico_To_Server_Frame_t *data);
 
-/// @brief Receive thread
-/// @param arg -
-/// @return true
-void* wifi_Receive_Thread(void* arg);
+/// @brief SIMPLE queue try remove function
+/// @param queue 
+/// @param data data to remove from queue
+/// @return true -> data successful added, false otherwise 
+bool queue_try_remove(pico_To_Server_Queue_t *queue, pico_To_Server_Frame_t *data);
 
-/// @brief Send thread
-/// @param arg -
-/// @return true
-void* wifi_Send_Thread(void* arg);
-
-/// @brief close receive and send thread
-/// @param -- 
-void thread_exit(void);
-
-/// @brief close socket
-/// @param  --
-void socket_exit(void);
 #endif
