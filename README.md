@@ -1,4 +1,5 @@
 ### Metal Detection App
+![Visitor Badge](https://visitor-badge.laobi.icu/badge?page_id=Devraux.metal_detection_gtk_app)
 
 The Metal Detection App is designed to work with the Metal Detection Vehicle, available in another one of my repositories with the same name. The goal of this application is to present the data collected by the metal detection vehicle in a convenient and readable format. The app is written with multi-threading to operate in a pseudo-real-time manner. The multi-threading is handled using the pthread library. 
 
